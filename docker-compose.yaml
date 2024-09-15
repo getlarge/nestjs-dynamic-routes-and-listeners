@@ -1,0 +1,31 @@
+version: '3.2'
+
+volumes:
+  rabbitmq_volume:
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'status']
+      interval: '10s'
+      timeout: '15s'
+      start_period: '30s'
+      retries: 3
+    volumes:
+      - ./infra/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./infra/rabbitmq/etc/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - rabbitmq_volume:/var/lib/rabbitmq/mnesia/rabbit@rabbitmq
+    ports:
+      - ${RABBITMQ_PORT:-5672}:5672
+      - ${RABBITMQ_MGT_PORT:-15672}:15672
+      - ${RABBITMQ_MQTT_PORT:-1883}:1883
+      - ${RABBITMQ_WS_PORT:-15675}:15675
+    networks:
+      - rabbitmq
+    restart: always
+    profiles:
+      - 'deps-only'
+      - 'dev'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
