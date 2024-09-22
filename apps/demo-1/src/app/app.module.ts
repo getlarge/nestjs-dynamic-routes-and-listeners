@@ -40,6 +40,13 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             transport: Transport.MQTT,
             options: {
               url: configService.get('MQTT_URL'),
+              serializer: {
+                serialize(value) {
+                  return typeof value === 'object' && 'data' in value
+                    ? value.data
+                    : value;
+                },
+              },
             },
           };
         },
