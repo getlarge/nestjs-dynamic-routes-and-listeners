@@ -1,31 +1,32 @@
-version: '3.2'
-
 volumes:
-  rabbitmq_volume:
+  mongo_volume:
+  mosquitto_volume:
 
 services:
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    healthcheck:
-      test: ['CMD', 'rabbitmq-diagnostics', 'status']
-      interval: '10s'
-      timeout: '15s'
-      start_period: '30s'
-      retries: 3
+  mongo-primary:
+    image: mongo:7
     volumes:
-      - ./infra/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./infra/rabbitmq/etc/enabled_plugins:/etc/rabbitmq/enabled_plugins
-      - rabbitmq_volume:/var/lib/rabbitmq/mnesia/rabbit@rabbitmq
-    ports:
-      - ${RABBITMQ_PORT:-5672}:5672
-      - ${RABBITMQ_MGT_PORT:-15672}:15672
-      - ${RABBITMQ_MQTT_PORT:-1883}:1883
-      - ${RABBITMQ_WS_PORT:-15675}:15675
+      - mongo_volume:/data/db
     networks:
-      - rabbitmq
-    restart: always
+      - mongo
+    ports:
+      - '${MONGO_PORT:-27017}:27017'
+    command: mongod --replSet rs0
+    healthcheck:
+      test: |
+        mongosh --eval "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }"
+      start_period: 0s
+      interval: 500ms
+      timeout: 5s
+      retries: 5
     profiles:
       - 'deps-only'
       - 'dev'
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.10
+    volumes:
+      - ${PWD}/infra/mosquitto/etc/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_volume:/mosquitto/data
+    ports:
+      - 1883:1883
