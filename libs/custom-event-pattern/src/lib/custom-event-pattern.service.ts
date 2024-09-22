@@ -1,7 +1,5 @@
-//@ts-import
 import { Inject, Injectable, Logger, Type } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { EventPattern } from '@nestjs/microservices';
+import { EventPattern, Transport } from '@nestjs/microservices';
 
 import {
   CUSTOM_EVENT_NAME_METADATA,
@@ -17,13 +15,12 @@ export class CustomEventPatternExplorer {
   constructor(
     @Inject(CustomEventPatternModuleOptions)
     private readonly options: CustomEventPatternModuleOptions,
-    private readonly reflector: Reflector
   ) {}
 
   substituteValues(input: string): string {
     return input.replace(
       /\$(\w+)/g,
-      (match, p1) => this.options.store.get(p1) || match
+      (match, p1) => this.options.store.get(p1) || match,
     );
   }
 
@@ -46,19 +43,18 @@ export class CustomEventPatternExplorer {
       const propNames = Object.getOwnPropertyNames(type.prototype);
       for (const prop of propNames) {
         const handler = Reflect.get(type.prototype, prop);
-        const dynamicTopic = this.reflector.get<string>(
+        const dynamicTopic = Reflect.getMetadata(
           CUSTOM_EVENT_NAME_METADATA,
-          handler
+          handler,
         );
         if (!dynamicTopic) continue;
-
         const topic = this.substituteValues(dynamicTopic);
         this.logger.log(`Mapped {${topic}} listener`);
         Reflect.decorate(
-          [EventPattern(topic)],
+          [EventPattern(topic, Transport.MQTT)],
           type.prototype,
           prop,
-          Reflect.getOwnPropertyDescriptor(type.prototype, prop)
+          Reflect.getOwnPropertyDescriptor(type.prototype, prop),
         );
       }
     }

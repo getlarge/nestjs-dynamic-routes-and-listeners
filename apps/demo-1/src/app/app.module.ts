@@ -8,14 +8,17 @@ import { CustomHttpMethodModule } from '@nestjs-dynamic-routes-and-listeners/cus
 import { EnvironmentVariables } from './environment-variables';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       cache: true,
+      isGlobal: true,
       validate: (config) => {
         const validatedConfig = plainToInstance(EnvironmentVariables, config, {
           excludeExtraneousValues: true,
+          exposeDefaultValues: true,
         });
         const errors = validateSync(validatedConfig, {
           skipMissingProperties: false,
@@ -26,16 +29,31 @@ import { validateSync } from 'class-validator';
         return validatedConfig;
       },
     }),
-
+    ClientsModule.registerAsync([
+      {
+        name: 'MQTT_CLIENT',
+        inject: [ConfigService],
+        useFactory: (
+          configService: ConfigService<EnvironmentVariables, true>,
+        ) => {
+          return {
+            transport: Transport.MQTT,
+            options: {
+              url: configService.get('MQTT_URL'),
+            },
+          };
+        },
+      },
+    ]),
     CustomEventPatternModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (
-        configService: ConfigService<EnvironmentVariables, true>
+        configService: ConfigService<EnvironmentVariables, true>,
       ) => {
         const store = new Map<string, string>();
         store.set(
           'ROUTING_KEY_PREFIX',
-          configService.get('ROUTING_KEY_PREFIX')
+          configService.get('ROUTING_KEY_PREFIX'),
         );
         return { store };
       },
@@ -43,12 +61,12 @@ import { validateSync } from 'class-validator';
     CustomHttpMethodModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (
-        configService: ConfigService<EnvironmentVariables, true>
+        configService: ConfigService<EnvironmentVariables, true>,
       ) => {
         const store = new Map<string, string>();
         store.set(
           'HTTP_METHOD_PREFIX',
-          configService.get('HTTP_METHOD_PREFIX')
+          configService.get('HTTP_METHOD_PREFIX'),
         );
         return { store };
       },

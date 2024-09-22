@@ -12,16 +12,16 @@ export class EnvironmentVariables {
   @IsUrl({
     require_protocol: true,
     require_valid_protocol: true,
-    protocols: ['amqp', 'amqps'],
+    protocols: ['mqtt', 'mqtts'],
     require_tld: false,
   })
-  RMQ_URL = 'amqp://localhost:5672';
+  MQTT_URL = 'mqtt://localhost:1883';
 
   @Expose()
   @IsString()
-  HTTP_METHOD_PREFIX = 'api';
+  HTTP_METHOD_PREFIX = 'http-demo-1';
 
   @Expose()
   @IsString()
-  ROUTING_KEY_PREFIX = 'root';
+  ROUTING_KEY_PREFIX = 'mqtt-demo-1';
 }

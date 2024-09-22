@@ -1,9 +1,9 @@
 import { Controller, Param } from '@nestjs/common';
+import { Payload } from '@nestjs/microservices';
 
 import { AppService } from './app.service';
 import { CustomEventPattern } from '@nestjs-dynamic-routes-and-listeners/custom-event-pattern';
 import { CustomHttpMethod } from '@nestjs-dynamic-routes-and-listeners/custom-http-method';
-import { Payload } from '@nestjs/microservices';
 
 @Controller()
 export class AppController {
@@ -14,7 +14,7 @@ export class AppController {
     return this.appService.getData(id);
   }
 
-  @CustomEventPattern('$ROUTING_KEY_PREFIX.*.#')
+  @CustomEventPattern('$ROUTING_KEY_PREFIX/+')
   onEvent(@Payload() data: Record<string, unknown>) {
     return this.appService.onEvent(data);
   }

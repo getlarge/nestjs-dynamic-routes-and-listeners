@@ -29,34 +29,36 @@ export class CustomHttpMethodExplorer {
   constructor(
     @Inject(CustomHttpMethodModuleOptions)
     private readonly options: CustomHttpMethodModuleOptions,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
   ) {}
 
   substituteValues(input: string): string {
     return input.replace(
       /\$(\w+)/g,
-      (match, p1) => this.options.store.get(p1) || match
+      (match, p1) => this.options.store.get(p1) || match,
     );
   }
 
-  getMethodDecorator(method: string) {
+  getMethodDecorator(
+    method: string,
+  ): (path: string | string[]) => MethodDecorator {
     switch (method.toUpperCase()) {
       case 'GET':
-        return Get();
+        return Get;
       case 'POST':
-        return Post();
+        return Post;
       case 'PUT':
-        return Put();
+        return Put;
       case 'DELETE':
-        return Delete();
+        return Delete;
       case 'PATCH':
-        return Patch();
+        return Patch;
       case 'OPTIONS':
-        return Options();
+        return Options;
       case 'HEAD':
-        return Head();
+        return Head;
       default:
-        return Get();
+        return Get;
     }
   }
 
@@ -82,7 +84,7 @@ export class CustomHttpMethodExplorer {
         const { method, path } =
           this.reflector.get<CustomHttpMethodOptions>(
             CUSTOM_HTTP_ROUTE_METADATA,
-            handler
+            handler,
           ) ?? {};
         if (!method) continue;
 
@@ -90,10 +92,10 @@ export class CustomHttpMethodExplorer {
         const decorator = this.getMethodDecorator(method);
         this.logger.log(`Mapped {${method} ${fulfilledPath}} route`);
         Reflect.decorate(
-          [decorator],
+          [decorator(fulfilledPath)],
           type.prototype,
           prop,
-          Reflect.getOwnPropertyDescriptor(type.prototype, prop)
+          Reflect.getOwnPropertyDescriptor(type.prototype, prop),
         );
       }
     }

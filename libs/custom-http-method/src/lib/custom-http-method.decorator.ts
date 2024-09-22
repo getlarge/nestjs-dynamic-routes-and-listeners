@@ -1,7 +1,7 @@
 import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { Method } from 'axios';
 
-export const CUSTOM_HTTP_ROUTE_METADATA = '__custom_event_name__';
+export const CUSTOM_HTTP_ROUTE_METADATA = '__custom_http_route__';
 
 export type CustomHttpMethodOptions = {
   method: Method;
@@ -13,12 +13,12 @@ export type CustomHttpMethodOptions = {
  */
 export function CustomHttpMethod(
   method: Method,
-  path: string
+  path: string,
 ): MethodDecorator {
   return applyDecorators(
     SetMetadata(CUSTOM_HTTP_ROUTE_METADATA, {
       method: method.toUpperCase(),
       path,
-    })
+    }),
   );
 }
