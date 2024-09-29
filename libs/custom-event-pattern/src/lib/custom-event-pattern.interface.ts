@@ -7,18 +7,11 @@ import type {
 
 export interface ICustomEventPatternModuleOptions {
   store: Map<string, string>;
-}
-
-export interface CustomEventPatternModuleOptionsFactory {
-  createOptions():
-    | Promise<ICustomEventPatternModuleOptions>
-    | ICustomEventPatternModuleOptions;
+  controllers: Type<unknown>[];
 }
 
 export interface CustomEventPatternModuleAsyncOptions
   extends Pick<ModuleMetadata, 'imports'> {
-  useExisting?: Type<CustomEventPatternModuleOptionsFactory>;
-  useClass?: Type<CustomEventPatternModuleOptionsFactory>;
   useFactory?: (
     ...args: unknown[]
   ) =>
@@ -30,5 +23,8 @@ export interface CustomEventPatternModuleAsyncOptions
 export class CustomEventPatternModuleOptions
   implements ICustomEventPatternModuleOptions
 {
-  constructor(public readonly store: Map<string, string>) {}
+  constructor(
+    public readonly store: Map<string, string>,
+    public readonly controllers: Type<unknown>[],
+  ) {}
 }

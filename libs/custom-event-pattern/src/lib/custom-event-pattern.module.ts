@@ -1,9 +1,8 @@
-import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 
 import {
   CustomEventPatternModuleAsyncOptions,
   CustomEventPatternModuleOptions,
-  CustomEventPatternModuleOptionsFactory,
   ICustomEventPatternModuleOptions,
 } from './custom-event-pattern.interface';
 import { CustomEventPatternExplorer } from './custom-event-pattern.service';
@@ -12,7 +11,7 @@ import { CustomEventPatternExplorer } from './custom-event-pattern.service';
 export class CustomEventPatternModule {
   static forRoot(
     options: ICustomEventPatternModuleOptions,
-    isGlobal?: boolean
+    isGlobal?: boolean,
   ): DynamicModule {
     return {
       module: CustomEventPatternModule,
@@ -28,7 +27,7 @@ export class CustomEventPatternModule {
 
   static forRootAsync(
     options: CustomEventPatternModuleAsyncOptions,
-    isGlobal?: boolean
+    isGlobal?: boolean,
   ): DynamicModule {
     return {
       module: CustomEventPatternModule,
@@ -43,44 +42,17 @@ export class CustomEventPatternModule {
   }
 
   private static createAsyncProviders(
-    options: CustomEventPatternModuleAsyncOptions
+    options: CustomEventPatternModuleAsyncOptions,
   ): Provider[] {
-    if (options.useExisting || options.useFactory) {
-      return [this.createAsyncOptionsProvider(options)];
-    }
-    if (options.useClass) {
+    if (options.useFactory) {
       return [
-        this.createAsyncOptionsProvider(options),
         {
-          provide: options.useClass,
-          useClass: options.useClass,
+          provide: CustomEventPatternModuleOptions,
+          useFactory: options.useFactory,
+          inject: options.inject ?? [],
         },
       ];
     }
     throw new Error('Invalid CustomEventPatternModuleAsyncOptions');
-  }
-
-  private static createAsyncOptionsProvider(
-    options: CustomEventPatternModuleAsyncOptions
-  ): Provider {
-    if (options.useFactory) {
-      return {
-        provide: CustomEventPatternModuleOptions,
-        useFactory: options.useFactory,
-        inject: options.inject ?? [],
-      };
-    }
-    if (!options.useExisting && !options.useClass) {
-      throw new Error('Invalid OryAuthenticationModuleAsyncOptions');
-    }
-    return {
-      provide: CustomEventPatternModuleOptions,
-      useFactory: (optionsFactory: CustomEventPatternModuleOptionsFactory) =>
-        optionsFactory.createOptions(),
-      inject: [
-        (options.useExisting ??
-          options.useClass) as Type<CustomEventPatternModuleOptionsFactory>,
-      ],
-    };
   }
 }
