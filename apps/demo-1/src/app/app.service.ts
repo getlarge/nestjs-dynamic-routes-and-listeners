@@ -18,4 +18,8 @@ export class AppService {
       message: 'Well done chaps!',
     });
   }
+
+  onMessage(data: Record<string, unknown>): void {
+    this.logger.log(`Received message with data: ${JSON.stringify(data)}`);
+  }
 }

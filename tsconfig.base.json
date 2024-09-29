@@ -20,6 +20,9 @@
       ],
       "@nestjs-dynamic-routes-and-listeners/custom-http-method": [
         "libs/custom-http-method/src/index.ts"
+      ],
+      "@nestjs-dynamic-routes-and-listeners/custom-message-pattern": [
+        "libs/custom-message-pattern/src/index.ts"
       ]
     }
   },

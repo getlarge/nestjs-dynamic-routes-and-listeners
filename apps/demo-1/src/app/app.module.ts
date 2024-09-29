@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CustomEventPatternModule } from '@nestjs-dynamic-routes-and-listeners/custom-event-pattern';
 import { CustomHttpMethodModule } from '@nestjs-dynamic-routes-and-listeners/custom-http-method';
+import { CustomMessagePatternModule } from '@nestjs-dynamic-routes-and-listeners/custom-message-pattern';
 import { EnvironmentVariables } from './environment-variables';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -62,7 +63,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           'ROUTING_KEY_PREFIX',
           configService.get('ROUTING_KEY_PREFIX'),
         );
-        return { store };
+        return { store, controllers: [AppController] };
       },
     }),
     CustomHttpMethodModule.forRootAsync({
@@ -75,7 +76,20 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           'HTTP_METHOD_PREFIX',
           configService.get('HTTP_METHOD_PREFIX'),
         );
-        return { store };
+        return { store, modules: [AppModule] };
+      },
+    }),
+    CustomMessagePatternModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (
+        configService: ConfigService<EnvironmentVariables, true>,
+      ) => {
+        const store = new Map<string, string>();
+        store.set(
+          'MESSAGE_PATTERN_PREFIX',
+          configService.get('MESSAGE_PATTERN_PREFIX'),
+        );
+        return { store, modules: [AppModule] };
       },
     }),
   ],

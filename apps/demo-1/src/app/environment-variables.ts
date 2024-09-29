@@ -24,4 +24,8 @@ export class EnvironmentVariables {
   @Expose()
   @IsString()
   ROUTING_KEY_PREFIX = 'mqtt-demo-1';
+
+  @Expose()
+  @IsString()
+  MESSAGE_PATTERN_PREFIX = 'mqtt-msg-demo-1';
 }
