@@ -1,9 +1,9 @@
-import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 
 import {
   CustomHttpMethodModuleAsyncOptions,
   CustomHttpMethodModuleOptions,
-  CustomHttpMethodModuleOptionsFactory,
   ICustomHttpMethodModuleOptions,
 } from './custom-http-method.interface';
 import { CustomHttpMethodExplorer } from './custom-http-method.service';
@@ -12,11 +12,11 @@ import { CustomHttpMethodExplorer } from './custom-http-method.service';
 export class CustomHttpMethodModule {
   static forRoot(
     options: ICustomHttpMethodModuleOptions,
-    isGlobal?: boolean
+    isGlobal?: boolean,
   ): DynamicModule {
     return {
       module: CustomHttpMethodModule,
-      imports: [],
+      imports: [DiscoveryModule],
       providers: [
         { provide: CustomHttpMethodModuleOptions, useValue: options },
         CustomHttpMethodExplorer,
@@ -28,11 +28,13 @@ export class CustomHttpMethodModule {
 
   static forRootAsync(
     options: CustomHttpMethodModuleAsyncOptions,
-    isGlobal?: boolean
+    isGlobal?: boolean,
   ): DynamicModule {
     return {
       module: CustomHttpMethodModule,
-      imports: options.imports ? [...options.imports] : [],
+      imports: options.imports
+        ? [...options.imports, DiscoveryModule]
+        : [DiscoveryModule],
       providers: [
         ...this.createAsyncProviders(options),
         CustomHttpMethodExplorer,
@@ -43,44 +45,17 @@ export class CustomHttpMethodModule {
   }
 
   private static createAsyncProviders(
-    options: CustomHttpMethodModuleAsyncOptions
+    options: CustomHttpMethodModuleAsyncOptions,
   ): Provider[] {
-    if (options.useExisting || options.useFactory) {
-      return [this.createAsyncOptionsProvider(options)];
-    }
-    if (options.useClass) {
+    if (options.useFactory) {
       return [
-        this.createAsyncOptionsProvider(options),
         {
-          provide: options.useClass,
-          useClass: options.useClass,
+          provide: CustomHttpMethodModuleOptions,
+          useFactory: options.useFactory,
+          inject: options.inject ?? [],
         },
       ];
     }
     throw new Error('Invalid CustomHttpMethodModuleAsyncOptions');
-  }
-
-  private static createAsyncOptionsProvider(
-    options: CustomHttpMethodModuleAsyncOptions
-  ): Provider {
-    if (options.useFactory) {
-      return {
-        provide: CustomHttpMethodModuleOptions,
-        useFactory: options.useFactory,
-        inject: options.inject ?? [],
-      };
-    }
-    if (!options.useExisting && !options.useClass) {
-      throw new Error('Invalid OryAuthenticationModuleAsyncOptions');
-    }
-    return {
-      provide: CustomHttpMethodModuleOptions,
-      useFactory: (optionsFactory: CustomHttpMethodModuleOptionsFactory) =>
-        optionsFactory.createOptions(),
-      inject: [
-        (options.useExisting ??
-          options.useClass) as Type<CustomHttpMethodModuleOptionsFactory>,
-      ],
-    };
   }
 }
