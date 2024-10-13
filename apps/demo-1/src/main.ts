@@ -21,7 +21,7 @@ async function bootstrap() {
     app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
   const port = configService.get('PORT');
 
-  app.connectMicroservice<MqttOptions>(
+  const microservice = app.connectMicroservice<MqttOptions>(
     {
       transport: Transport.MQTT,
       options: {
@@ -33,8 +33,10 @@ async function bootstrap() {
     },
     { inheritAppConfig: true },
   );
-  await app.startAllMicroservices();
+  await microservice.init();
+  await app.init();
 
+  await microservice.listen();
   await app.listen(port);
   Logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
