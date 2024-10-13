@@ -19,6 +19,17 @@ import { CustomHttpMethodModuleOptions } from './custom-http-method.interface';
 @Injectable()
 export class CustomHttpMethodExplorer {
   readonly logger = new Logger(CustomHttpMethodExplorer.name);
+  private readonly methodsMap = new Map(
+    Object.entries({
+      GET: Get,
+      POST: Post,
+      PUT: Put,
+      DELETE: Delete,
+      PATCH: Patch,
+      OPTIONS: Options,
+      HEAD: Head,
+    } as const),
+  );
 
   constructor(
     @Inject(CustomHttpMethodModuleOptions)
@@ -47,24 +58,7 @@ export class CustomHttpMethodExplorer {
   private getMethodDecorator(
     method: string,
   ): (path: string | string[]) => MethodDecorator {
-    switch (method.toUpperCase()) {
-      case 'GET':
-        return Get;
-      case 'POST':
-        return Post;
-      case 'PUT':
-        return Put;
-      case 'DELETE':
-        return Delete;
-      case 'PATCH':
-        return Patch;
-      case 'OPTIONS':
-        return Options;
-      case 'HEAD':
-        return Head;
-      default:
-        return Get;
-    }
+    return this.methodsMap.get(method.toUpperCase()) || Get;
   }
 
   process() {
@@ -89,13 +83,15 @@ export class CustomHttpMethodExplorer {
         const { method, path } = metadata;
         const fulfilledPath = this.substituteValues(path);
         const decorator = this.getMethodDecorator(method);
-        this.logger.log(`Mapped {${method} ${fulfilledPath}} route`);
-        Reflect.decorate(
-          [decorator(fulfilledPath)],
-          wrapper.metatype.prototype,
+        decorator(fulfilledPath)(
+          wrapper.metatype,
           handler,
-          Reflect.getOwnPropertyDescriptor(wrapper.metatype.prototype, handler),
+          Object.getOwnPropertyDescriptor(
+            wrapper.metatype.prototype,
+            handler,
+          ) as PropertyDescriptor,
         );
+        this.logger.log(`Mapped {${method} ${fulfilledPath}} route`);
       }
     }
   }
